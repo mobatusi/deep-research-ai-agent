@@ -53,29 +53,39 @@ def firecrawl_search(query: str) -> str:
         # Use Firecrawl SDK's search method with content extraction
         search_results = client.search(
             query=query,
-            params={
-                "limit": 5,  # Limit number of results
-                "scrapeOptions": {
-                    "formats": ["markdown", "html"]
-                }
+            limit=5,
+            scrape_options={
+                "formats": ["markdown"]
             }
         )
 
         # Extract URLs and content from results
         results_text = []
 
-        if search_results and "data" in search_results:
-            for item in search_results["data"]:
+        # Handle SearchData object (has .web, .news, .images attributes)
+        if search_results and hasattr(search_results, 'web') and search_results.web:
+            for item in search_results.web:
                 # Extract URL
-                if "url" in item:
-                    url = item["url"]
+                url = getattr(item, 'url', '')
+                if url:
                     extracted_links.append(url)
 
-                # Extract content (markdown or html)
-                content = item.get("markdown", item.get("html", ""))
-                title = item.get("title", "No title")
+                # Extract metadata
+                title = getattr(item, 'title', 'No title')
+                description = getattr(item, 'description', '')
 
-                results_text.append(f"Title: {title}\nURL: {url}\n\nContent:\n{content}\n\n---\n")
+                # Extract content if available (from scrape_options)
+                content = getattr(item, 'markdown', '') or getattr(item, 'html', '')
+
+                # Build result text
+                result_entry = f"Title: {title}\nURL: {url}\n"
+                if description:
+                    result_entry += f"Description: {description}\n"
+                if content:
+                    result_entry += f"\nContent:\n{content[:500]}...\n"  # Limit content length
+                result_entry += "\n---\n"
+
+                results_text.append(result_entry)
 
         if results_text:
             return "\n".join(results_text)
@@ -83,7 +93,9 @@ def firecrawl_search(query: str) -> str:
             return "No search results found."
 
     except Exception as e:
-        return f"Error during Firecrawl search: {str(e)}"
+        import traceback
+        error_details = traceback.format_exc()
+        return f"Error during Firecrawl search: {str(e)}\n\nDetails:\n{error_details}"
 
 
 
