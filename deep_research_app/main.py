@@ -112,9 +112,15 @@ if st.button("🚀 Run Deep Research", type="primary", use_container_width=True)
                     # Display PDF inline (optional preview)
                     st.markdown("**PDF Preview:**")
 
-                # Inline PDF viewer
+                # Improved PDF viewer with better browser compatibility
                 st.markdown("### 📄 PDF Report Viewer")
-                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+                pdf_display = f"""
+                <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="800px">
+                    <embed src="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="800px">
+                        <p>Your browser does not support PDFs. <a href="data:application/pdf;base64,{base64_pdf}" download="research_report.pdf">Download the PDF</a> to view it.</p>
+                    </embed>
+                </object>
+                """
                 st.markdown(pdf_display, unsafe_allow_html=True)
 
             except Exception as e:
